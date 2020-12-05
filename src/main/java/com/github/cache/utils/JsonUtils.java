@@ -7,12 +7,12 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonUtils {
 
-    private static final String JSON_ERROR_MESSAGE = "JSON_ERROR";
     private static ObjectMapper mapper;
 
     public static void setup(ObjectMapper objectMapper) {
@@ -21,29 +21,19 @@ public class JsonUtils {
 
 
     @Nullable
-    static byte[] serialize(Object data) {
-        try {
-            if (data == null) {
-                return null;
-            }
-            return mapper.writeValueAsBytes(data);
-        } catch (JsonProcessingException e) {
-            log.error(JSON_ERROR_MESSAGE, e);
-            throw AppException.propagate(e, ErrorCode.JSON_ERROR);
+    static byte[] serialize(Object data) throws JsonProcessingException {
+        if (data == null) {
+            return null;
         }
+        return mapper.writeValueAsBytes(data);
     }
 
     @Nullable
-    static <T> T deserialize(byte[] data, Class<T> valueType) {
-        try {
-            if (data == null) {
-                return null;
-            }
-            return mapper.readValue(data, valueType);
-        } catch (Exception e) {
-            log.error(JSON_ERROR_MESSAGE, e);
-            throw AppException.propagate(e, ErrorCode.JSON_ERROR);
+    static <T> T deserialize(byte[] data, Class<T> valueType) throws IOException {
+        if (data == null) {
+            return null;
         }
+        return mapper.readValue(data, valueType);
     }
 
 }
