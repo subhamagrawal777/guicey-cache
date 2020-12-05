@@ -88,6 +88,10 @@ public class CachingModule extends AbstractModule {
                 return null;
             }
             val decryptedData = decryptIfRequired(storedCache);
+            return decodeAndTransform(invocation, decryptedData);
+        }
+
+        private Object decodeAndTransform(MethodInvocation invocation, byte[] decryptedData) throws java.io.IOException {
             if (invocation.getMethod().getReturnType().equals(invocation.getMethod().getGenericReturnType())) {
                 return CompressionUtils.decode(decryptedData, invocation.getMethod().getReturnType());
             } else {
@@ -139,7 +143,7 @@ public class CachingModule extends AbstractModule {
             for (int i = 0; i < invocation.getMethod().getParameters().length; i++) {
                 context.put(invocation.getMethod().getParameters()[i].getName(), invocation.getArguments()[i]);
             }
-            DocumentContext documentContext = JsonPath.parse(context);
+            val documentContext = JsonPath.parse(context);
 
             return Arrays.stream(cache.keys())
                     .map(key -> {
