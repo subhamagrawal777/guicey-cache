@@ -1,5 +1,6 @@
 package com.github.cache.utils;
 
+import com.fasterxml.jackson.databind.JavaType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,14 @@ public class CompressionUtils {
     }
 
     public static <T> T decode(byte[] data, Class<T> tClass) throws IOException {
+        return JsonUtils.deserialize(decode(data), tClass);
+    }
+
+    public static <T> T decode(byte[] data, JavaType javaType) throws IOException {
+        return JsonUtils.deserialize(decode(data), javaType);
+    }
+
+    private static String decode(byte[] data) throws IOException {
         val byteArrayInputStream = new ByteArrayInputStream(Base64.getDecoder().decode(data));
         val gzipInputStream = new GZIPInputStream(byteArrayInputStream);
         val inputStreamReader = new InputStreamReader(gzipInputStream, StandardCharsets.UTF_8);
@@ -42,7 +51,7 @@ public class CompressionUtils {
         while ((line = bufferedReader.readLine()) != null) {
             output.append(line);
         }
-        return JsonUtils.deserialize(output.toString().getBytes(), tClass);
+        return output.toString();
     }
 
 }

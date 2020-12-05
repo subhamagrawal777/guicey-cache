@@ -1,6 +1,7 @@
 package com.github.cache.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -29,11 +30,19 @@ public class JsonUtils {
     }
 
     @Nullable
-    static <T> T deserialize(byte[] data, Class<T> valueType) throws IOException {
+    static <T> T deserialize(String data, Class<T> valueType) throws IOException {
         if (data == null) {
             return null;
         }
         return mapper.readValue(data, valueType);
+    }
+
+    @Nullable
+    static <T> T deserialize(String data, JavaType javaType) throws IOException {
+        if (data == null) {
+            return null;
+        }
+        return mapper.readValue(data, javaType);
     }
 
 }

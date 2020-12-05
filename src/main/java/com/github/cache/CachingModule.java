@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.github.cache.annotations.Cache;
 import com.github.cache.crypto.CryptoFactory;
+import com.github.cache.models.EncryptionMode;
 import com.github.cache.models.StoredCache;
 import com.github.cache.storage.StoredCacheDao;
 import com.github.cache.utils.CompressionUtils;
@@ -21,9 +22,8 @@ import lombok.val;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -64,9 +64,9 @@ public class CachingModule extends AbstractModule {
             }
 
             try {
-                val cachedResponseOptional = getResponseObject(invocation, key);
-                if (cachedResponseOptional.isPresent()) {
-                    return cachedResponseOptional.get();
+                val cachedResponse = getResponseObject(invocation, key);
+                if (Objects.nonNull(cachedResponse)) {
+                    return cachedResponse;
                 }
             } catch (Exception e) {
                 log.error("Error getting value from cache for Key:{}, Method Name: {}", key, invocation.getMethod().getName(), e);
@@ -76,14 +76,28 @@ public class CachingModule extends AbstractModule {
             return saveAndReturnResponse(invocation, cache, key);
         }
 
-        private Optional<?> getResponseObject(MethodInvocation invocation, String key) {
+        private Object getResponseObject(MethodInvocation invocation, String key) throws Exception {
+            val storedCache = storedCacheDao.get(key).orElse(null);
+            if (storedCache == null) {
+                return null;
+            }
+            val decryptedData = decryptIfRequired(storedCache);
             if (invocation.getMethod().getReturnType().equals(invocation.getMethod().getGenericReturnType())) {
-                return storedCacheDao.get(key, invocation.getMethod().getReturnType());
+                return CompressionUtils.decode(decryptedData, invocation.getMethod().getReturnType());
             } else {
                 JavaType javaType = TypeFactory.defaultInstance()
                         .constructType(invocation.getMethod().getGenericReturnType());
-                return storedCacheDao.getUsingJavaType(key, javaType);
+                return CompressionUtils.decode(decryptedData, javaType);
             }
+        }
+
+        private byte[] decryptIfRequired(StoredCache storedCache) throws Exception {
+            if (storedCache.getEncryptionMeta() != null &&
+                    storedCache.getEncryptionMeta().getEncryptionMode() != EncryptionMode.NONE) {
+                return cryptoFactory.getEncryptionService(storedCache.getEncryptionMeta())
+                        .decrypt(storedCache.getData());
+            }
+            return storedCache.getData();
         }
 
         private Object saveAndReturnResponse(MethodInvocation invocation, Cache cache, String key) throws Throwable {
@@ -97,13 +111,13 @@ public class CachingModule extends AbstractModule {
             return response;
         }
 
-        private StoredCache encodeAndEncryptIfNecessary(Object responseData, Cache cache) throws IOException {
+        private StoredCache encodeAndEncryptIfNecessary(Object responseData, Cache cache) throws Exception {
             val encodedData = CompressionUtils.encode(responseData);
-            if (cache.encrypt()) {
-
-            }
+            val finalData = cache.encrypt()
+                    ? cryptoFactory.getDefaultEncryptionService().encrypt(encodedData)
+                    : encodedData;
             return StoredCache.builder()
-                    .data(encodedData)
+                    .data(finalData)
                     .build();
         }
 
