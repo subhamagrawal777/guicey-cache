@@ -2,6 +2,7 @@ package com.github.cache.crypto;
 
 import com.github.cache.annotations.Encryption;
 import com.github.cache.models.EncryptionMeta;
+import com.github.cache.utils.Constants;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
@@ -30,6 +31,10 @@ public class CryptoFactory {
 
     public EncryptionService getEncryptionService(EncryptionMeta meta) {
         return encryptionMetaEncryptionServiceMap.get(meta);
+    }
+
+    public EncryptionService getDefaultEncryptionService() {
+        return encryptionMetaEncryptionServiceMap.get(Constants.DEFAULT_ENCRYPTION_META);
     }
 
     private EncryptionMeta buildEncryptionMeta(Encryption encryption) {
