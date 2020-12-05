@@ -10,4 +10,6 @@ public class StoredCache {
     private byte[] data;
 
     private EncryptionMeta encryptionMeta;
+
+    private long cachedAt;
 }

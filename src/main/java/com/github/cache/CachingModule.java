@@ -8,6 +8,7 @@ import com.github.cache.models.EncryptionMode;
 import com.github.cache.models.StoredCache;
 import com.github.cache.storage.StoredCacheDao;
 import com.github.cache.utils.CompressionUtils;
+import com.github.cache.utils.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
@@ -22,6 +23,7 @@ import lombok.val;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -64,7 +66,7 @@ public class CachingModule extends AbstractModule {
             }
 
             try {
-                val cachedResponse = getResponseObject(invocation, key);
+                val cachedResponse = getResponseObject(invocation, cache, key);
                 if (Objects.nonNull(cachedResponse)) {
                     return cachedResponse;
                 }
@@ -76,9 +78,13 @@ public class CachingModule extends AbstractModule {
             return saveAndReturnResponse(invocation, cache, key);
         }
 
-        private Object getResponseObject(MethodInvocation invocation, String key) throws Exception {
+        private Object getResponseObject(MethodInvocation invocation, Cache cache, String key) throws Exception {
             val storedCache = storedCacheDao.get(key).orElse(null);
             if (storedCache == null) {
+                return null;
+            }
+            if (!isValid(storedCache, cache)) {
+                storedCacheDao.remove(key);
                 return null;
             }
             val decryptedData = decryptIfRequired(storedCache);
@@ -89,6 +95,10 @@ public class CachingModule extends AbstractModule {
                         .constructType(invocation.getMethod().getGenericReturnType());
                 return CompressionUtils.decode(decryptedData, javaType);
             }
+        }
+
+        private boolean isValid(StoredCache storedCache, Cache cache) {
+            return storedCache.getCachedAt() > cache.structureChangeAt();
         }
 
         private byte[] decryptIfRequired(StoredCache storedCache) throws Exception {
@@ -116,8 +126,11 @@ public class CachingModule extends AbstractModule {
             val finalData = cache.encrypt()
                     ? cryptoFactory.getDefaultEncryptionService().encrypt(encodedData)
                     : encodedData;
+            val encryptionMeta = cache.encrypt() ? Constants.DEFAULT_ENCRYPTION_META : null;
             return StoredCache.builder()
                     .data(finalData)
+                    .cachedAt(Instant.now().toEpochMilli())
+                    .encryptionMeta(encryptionMeta)
                     .build();
         }
 

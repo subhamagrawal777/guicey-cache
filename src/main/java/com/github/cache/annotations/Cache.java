@@ -24,4 +24,12 @@ public @interface Cache {
     int ttlInSec() default 600;
 
     boolean encrypt() default false;
+
+    /**
+     * If your method structure has changed or there has been some additions in the response object.
+     * In the above cases, you don't want to use cached data then you can specify the timestamp in millis when the change was deployed.
+     *
+     * If the cached object was before the given time, it would force call the method
+     */
+    long structureChangeAt() default 0;
 }
