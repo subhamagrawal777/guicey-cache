@@ -1,6 +1,5 @@
 package com.github.cache;
 
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.github.cache.annotations.Cache;
 import com.github.cache.crypto.CryptoFactory;
@@ -13,7 +12,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.matcher.Matchers;
 import com.jayway.jsonpath.JsonPath;
@@ -33,13 +31,15 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class CachingModule extends AbstractModule {
 
-    private Provider<StoredCacheDao> storedCacheDaoProvider;
+    private StoredCacheDao storedCacheDao;
 
     @Override
     protected void configure() {
         final CacheInterceptor cacheInterceptor = new CacheInterceptor();
+        if (storedCacheDao != null) {
+            bind(StoredCacheDao.class).toInstance(storedCacheDao);
+        }
         requestInjection(cacheInterceptor);
-        bind(StoredCacheDao.class).toProvider(storedCacheDaoProvider);
         bindInterceptor(Matchers.any(), Matchers.annotatedWith(Cache.class), cacheInterceptor);
     }
 
@@ -65,7 +65,7 @@ public class CachingModule extends AbstractModule {
                 return invocation.proceed();
             }
 
-            Cache cache = invocation.getMethod().getAnnotation(Cache.class);
+            val cache = invocation.getMethod().getAnnotation(Cache.class);
             String key;
             try {
                 key = getKey(cache, invocation);
@@ -104,7 +104,7 @@ public class CachingModule extends AbstractModule {
             if (invocation.getMethod().getReturnType().equals(invocation.getMethod().getGenericReturnType())) {
                 return CompressionUtils.decode(decryptedData, invocation.getMethod().getReturnType());
             } else {
-                JavaType javaType = TypeFactory.defaultInstance()
+                val javaType = TypeFactory.defaultInstance()
                         .constructType(invocation.getMethod().getGenericReturnType());
                 return CompressionUtils.decode(decryptedData, javaType);
             }
