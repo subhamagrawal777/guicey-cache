@@ -13,7 +13,7 @@ public abstract class CacheBundle implements GuiceyBundle {
         JsonUtils.setup(objectMapper());
     }
 
-    abstract StoredCacheDao getStoredCacheDao();
+    public abstract StoredCacheDao getStoredCacheDao();
 
-    abstract ObjectMapper objectMapper();
+    public abstract ObjectMapper objectMapper();
 }
