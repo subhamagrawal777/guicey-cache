@@ -4,7 +4,9 @@ import com.github.cache.annotations.Encryption;
 import com.github.cache.crypto.AESEncryptionService;
 import com.github.cache.models.EncryptionMode;
 import com.github.cache.models.Version;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 
 @Singleton
 @Encryption(mode = EncryptionMode.AES, version = Version.V1)
@@ -16,7 +18,8 @@ public class AESEncryptionServiceV1 extends AESEncryptionService {
     private static final int IV_LENGTH_BYTE = 12;
     private static final int SALT_LENGTH_BYTE = 16;
 
-    public AESEncryptionServiceV1(String password) {
+    @Inject
+    public AESEncryptionServiceV1(@Named("AES_V1_PASSWORD") String password) {
         super(ENCRYPT_ALGO, KEY_LENGTH_BIT, IV_LENGTH_BYTE, SALT_LENGTH_BYTE, password);
     }
 

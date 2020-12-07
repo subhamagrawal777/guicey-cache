@@ -14,6 +14,7 @@ import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Provides;
 import com.google.inject.matcher.Matchers;
 import com.jayway.jsonpath.JsonPath;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ import lombok.val;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
+import javax.inject.Named;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
@@ -39,6 +41,14 @@ public class CachingModule extends AbstractModule {
         requestInjection(cacheInterceptor);
         bind(StoredCacheDao.class).toProvider(storedCacheDaoProvider);
         bindInterceptor(Matchers.any(), Matchers.annotatedWith(Cache.class), cacheInterceptor);
+    }
+
+    //TODO:: Should I ask from Client? Then would they ensure that they send the same every time...
+    // Probably it should reside encrypted in the bundle itself
+    @Provides
+    @Named("AES_V1_PASSWORD")
+    public String provideAESPassword() {
+        return "temporary_password";
     }
 
     public class CacheInterceptor implements MethodInterceptor {

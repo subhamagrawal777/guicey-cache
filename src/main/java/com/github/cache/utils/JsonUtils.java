@@ -18,7 +18,6 @@ public class JsonUtils {
         mapper = objectMapper;
     }
 
-
     @Nullable
     static byte[] serialize(Object data) throws JsonProcessingException {
         if (data == null) {
