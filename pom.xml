@@ -8,20 +8,40 @@
     <artifactId>cache</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <!--<repositories>-->
-    <!--<repository>-->
-    <!--<id>clojars</id>-->
-    <!--<name>Clojars repository</name>-->
-    <!--<url>https://clojars.org/repo</url>-->
-    <!--</repository>-->
-    <!--</repositories>-->
+    <distributionManagement>
+        <repository>
+            <id>clojars</id>
+            <name>Clojars repository</name>
+            <url>https://clojars.org/repo</url>
+        </repository>
+    </distributionManagement>
 
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/subhamagrawal777/guicey-cache</connection>
+        <developerConnection>scm:git:https://github.com/subhamagrawal777/guicey-cache</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/subhamagrawal777/guicey-cache</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Subham Agrawal</name>
+        </developer>
+    </developers>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <dropwizard.guicey.version>4.2.1</dropwizard.guicey.version>
         <jackson.databind.version>2.9.6</jackson.databind.version>
-        <aerospike.version>4.4.3</aerospike.version>
         <lombok.version>1.18.0</lombok.version>
         <lombok.maven.plugin.version>1.18.12.0</lombok.maven.plugin.version>
         <junit.version>4.12</junit.version>
