@@ -93,6 +93,7 @@ public class CachingModule extends AbstractModule {
                 return null;
             }
             if (!isValid(storedCache, cache)) {
+                log.info("Cache is expired for Key :: {}. Hence removing data and proceeding invocation", key);
                 storedCacheDao.remove(key);
                 return null;
             }
