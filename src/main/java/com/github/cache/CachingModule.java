@@ -14,6 +14,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.matcher.Matchers;
+import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,16 +67,18 @@ public class CachingModule extends AbstractModule {
             }
 
             val cache = invocation.getMethod().getAnnotation(Cache.class);
-            String key;
+            String key, groupingKey;
             try {
-                key = getKey(cache, invocation);
+                val documentContext = getDocumentContext(invocation);
+                key = buildKey(documentContext, cache.keys());
+                groupingKey = buildKey(documentContext, cache.groupingKeys());
             } catch (Exception e) {
                 log.error("Error forming Key. Please check cache param. Method Name: {}", invocation.getMethod().getName(), e);
                 return invocation.proceed();
             }
 
             try {
-                val cachedResponse = getResponseObject(invocation, cache, key);
+                val cachedResponse = getResponseObject(invocation, cache, groupingKey, key);
                 if (Objects.nonNull(cachedResponse)) {
                     return cachedResponse;
                 }
@@ -84,17 +87,17 @@ public class CachingModule extends AbstractModule {
                 return invocation.proceed();
             }
 
-            return saveAndReturnResponse(invocation, cache, key);
+            return saveAndReturnResponse(invocation, cache, groupingKey, key);
         }
 
-        private Object getResponseObject(MethodInvocation invocation, Cache cache, String key) throws Exception {
-            val storedCache = storedCacheDao.get(key).orElse(null);
+        private Object getResponseObject(MethodInvocation invocation, Cache cache, String groupingKey, String key) throws Exception {
+            val storedCache = storedCacheDao.get(groupingKey, key).orElse(null);
             if (storedCache == null) {
                 return null;
             }
             if (!isValid(storedCache, cache)) {
                 log.info("Cache is expired for Key :: {}. Hence removing data and proceeding invocation", key);
-                storedCacheDao.remove(key);
+                storedCacheDao.remove(groupingKey, key);
                 return null;
             }
             val decryptedData = decryptIfRequired(storedCache);
@@ -124,11 +127,11 @@ public class CachingModule extends AbstractModule {
             return storedCache.getData();
         }
 
-        private Object saveAndReturnResponse(MethodInvocation invocation, Cache cache, String key) throws Throwable {
+        private Object saveAndReturnResponse(MethodInvocation invocation, Cache cache, String groupingKey, String key) throws Throwable {
             val response = invocation.proceed();
             try {
                 val data = encodeAndEncryptIfNecessary(response, cache);
-                storedCacheDao.save(data, key, cache.ttlInSec());
+                storedCacheDao.save(data, groupingKey, key, cache.ttlInSec());
             } catch (Exception e) {
                 log.error("Error saving in Cache for key: {}, Method Name: {}", key, invocation.getMethod().getName(), e);
             }
@@ -148,14 +151,9 @@ public class CachingModule extends AbstractModule {
                     .build();
         }
 
-        private String getKey(Cache cache, MethodInvocation invocation) {
-            val context = Maps.newHashMap();
-            for (int i = 0; i < invocation.getMethod().getParameters().length; i++) {
-                context.put(invocation.getMethod().getParameters()[i].getName(), invocation.getArguments()[i]);
-            }
-            val documentContext = JsonPath.parse(context);
+        private String buildKey(DocumentContext documentContext, String[] keys) {
 
-            return Arrays.stream(cache.keys())
+            return Arrays.stream(keys)
                     .map(key -> {
                         if (key.startsWith("$.")) {
                             val result = documentContext.read(key, String.class);
@@ -165,6 +163,14 @@ public class CachingModule extends AbstractModule {
                         return key;
                     })
                     .collect(Collectors.joining(":"));
+        }
+
+        private DocumentContext getDocumentContext(MethodInvocation invocation) {
+            val context = Maps.newHashMap();
+            for (int i = 0; i < invocation.getMethod().getParameters().length; i++) {
+                context.put(invocation.getMethod().getParameters()[i].getName(), invocation.getArguments()[i]);
+            }
+            return JsonPath.parse(context);
         }
     }
 }

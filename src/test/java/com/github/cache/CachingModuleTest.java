@@ -29,6 +29,7 @@ import static org.mockito.Mockito.*;
 public class CachingModuleTest {
 
     private static final String USER_ID = "U12345";
+    private static final String DEFAULT_GROUPING_KEY = "default-cache-set";
     private static final byte[] USER_ID_IN_BYTES = USER_ID.getBytes();
     private static final EncryptionMode ENCRYPTION_MODE = EncryptionMode.AES;
     private static final byte[] BYTES_DATA = "TEMP".getBytes();
@@ -75,15 +76,15 @@ public class CachingModuleTest {
 
         assertEquals(expected, result);
         verify(encryptionService, times(1)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(0)).get(any());
-        verify(storedCacheDao, times(0)).save(any(), any(), anyInt());
+        verify(storedCacheDao, times(0)).get(any(), any());
+        verify(storedCacheDao, times(0)).save(any(), any(), any(), anyInt());
     }
 
     @Test
     @SneakyThrows
     public void testInterceptorForAnnotatedMethod() {
         val key = String.join(":", USER_ID, ENCRYPTION_MODE.name(), "method");
-        when(storedCacheDao.get(key)).thenReturn(Optional.empty());
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key)).thenReturn(Optional.empty());
 
         val expected = getExpectedObject();
 
@@ -92,8 +93,8 @@ public class CachingModuleTest {
         assertEquals(expected, result);
 
         verify(encryptionService, times(1)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(1)).get(key);
-        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(key), eq(600));
+        verify(storedCacheDao, times(1)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(DEFAULT_GROUPING_KEY), eq(key), eq(600));
     }
 
     @Test
@@ -106,22 +107,22 @@ public class CachingModuleTest {
                 .cachedAt(122143)
                 .build();
 
-        when(storedCacheDao.get(key)).thenReturn(Optional.of(storedCache));
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key)).thenReturn(Optional.of(storedCache));
 
         val result = dummyClass.storedCacheMethod(USER_ID, ENCRYPTION_MODE);
 
         assertEquals(expected, result);
 
         verify(encryptionService, times(0)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(1)).get(key);
-        verify(storedCacheDao, times(0)).save(any(), any(), anyInt());
+        verify(storedCacheDao, times(1)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(0)).save(any(), any(), any(), anyInt());
     }
 
     @Test
     @SneakyThrows
     public void testInterceptorWhenUnableToRetrieveData() {
         val key = String.join(":", USER_ID, ENCRYPTION_MODE.name(), "method");
-        when(storedCacheDao.get(key)).thenThrow(new IllegalArgumentException());
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key)).thenThrow(new IllegalArgumentException());
 
         val resultWhenInvokedOnce = dummyClass.storedCacheMethod(USER_ID, ENCRYPTION_MODE);
         val resultWhenInvokedTwice = dummyClass.storedCacheMethod(USER_ID, ENCRYPTION_MODE);
@@ -132,17 +133,17 @@ public class CachingModuleTest {
         assertEquals(expected, resultWhenInvokedTwice);
 
         verify(encryptionService, times(2)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(2)).get(key);
-        verify(storedCacheDao, times(0)).save(any(), any(), anyInt());
+        verify(storedCacheDao, times(2)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(0)).save(any(), any(), any(), anyInt());
     }
 
     @Test
     @SneakyThrows
     public void testInterceptorWhenUnableToSaveData() {
         val key = String.join(":", USER_ID, ENCRYPTION_MODE.name(), "method");
-        when(storedCacheDao.get(key)).thenReturn(Optional.empty());
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key)).thenReturn(Optional.empty());
 
-        doThrow(new IllegalArgumentException()).when(storedCacheDao).save(any(StoredCache.class), eq(key), eq(600));
+        doThrow(new IllegalArgumentException()).when(storedCacheDao).save(any(StoredCache.class), eq(DEFAULT_GROUPING_KEY), eq(key), eq(600));
 
         val resultWhenInvokedOnce = dummyClass.storedCacheMethod(USER_ID, ENCRYPTION_MODE);
         val resultWhenInvokedTwice = dummyClass.storedCacheMethod(USER_ID, ENCRYPTION_MODE);
@@ -152,8 +153,8 @@ public class CachingModuleTest {
         assertEquals(expected, resultWhenInvokedTwice);
 
         verify(encryptionService, times(2)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(2)).get(key);
-        verify(storedCacheDao, times(2)).save(any(StoredCache.class), eq(key), eq(600));
+        verify(storedCacheDao, times(2)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(2)).save(any(StoredCache.class), eq(DEFAULT_GROUPING_KEY), eq(key), eq(600));
     }
 
     @Test
@@ -167,7 +168,7 @@ public class CachingModuleTest {
                 .cachedAt(122143)
                 .build();
 
-        when(storedCacheDao.get(key))
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(storedCache));
 
@@ -180,15 +181,15 @@ public class CachingModuleTest {
         assertEquals(expected, resultWhenInvokedTwice);
 
         verify(encryptionService, times(1)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(2)).get(key);
-        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(key), eq(600));
+        verify(storedCacheDao, times(2)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(DEFAULT_GROUPING_KEY), eq(key), eq(600));
     }
 
     @Test
     @SneakyThrows
     public void testInterceptorForAnnotatedMethodWithEncryption() {
         val key = String.join(":", USER_ID, ENCRYPTION_MODE.name());
-        when(storedCacheDao.get(key)).thenReturn(Optional.empty());
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key)).thenReturn(Optional.empty());
 
         val expected = getExpectedObject();
 
@@ -201,8 +202,8 @@ public class CachingModuleTest {
 
         verify(encryptionService, times(1)).encrypt(USER_ID_IN_BYTES);
         verify(defaultEncryptionService, times(1)).encrypt(CompressionUtils.encode(expected));
-        verify(storedCacheDao, times(1)).get(key);
-        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(key), eq(100));
+        verify(storedCacheDao, times(1)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(DEFAULT_GROUPING_KEY), eq(key), eq(100));
     }
 
     @Test
@@ -220,7 +221,7 @@ public class CachingModuleTest {
                 .cachedAt(122143)
                 .encryptionMeta(encryptionMeta)
                 .build();
-        when(storedCacheDao.get(key)).thenReturn(Optional.of(storedCache));
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key)).thenReturn(Optional.of(storedCache));
 
         when(cryptoFactory.getEncryptionService(encryptionMeta)).thenReturn(defaultEncryptionService);
         when(defaultEncryptionService.decrypt(storedCache.getData())).thenReturn(storedCache.getData());
@@ -232,8 +233,8 @@ public class CachingModuleTest {
 
         verify(encryptionService, times(0)).encrypt(USER_ID_IN_BYTES);
         verify(defaultEncryptionService, times(1)).decrypt(CompressionUtils.encode(expected));
-        verify(storedCacheDao, times(1)).get(key);
-        verify(storedCacheDao, times(0)).save(any(StoredCache.class), eq(key), eq(100));
+        verify(storedCacheDao, times(1)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(0)).save(any(StoredCache.class), eq(DEFAULT_GROUPING_KEY), eq(key), eq(100));
     }
 
     @Test
@@ -246,15 +247,15 @@ public class CachingModuleTest {
                 .cachedAt(122143)
                 .build();
 
-        when(storedCacheDao.get(key)).thenReturn(Optional.of(storedCache));
+        when(storedCacheDao.get(DEFAULT_GROUPING_KEY, key)).thenReturn(Optional.of(storedCache));
 
         val result = dummyClass.storedCacheMethodWithStructureChange(USER_ID, ENCRYPTION_MODE);
 
         assertEquals(expected, result);
 
         verify(encryptionService, times(1)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(1)).get(key);
-        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(key), eq(150));
+        verify(storedCacheDao, times(1)).get(DEFAULT_GROUPING_KEY, key);
+        verify(storedCacheDao, times(1)).save(any(StoredCache.class), eq(DEFAULT_GROUPING_KEY), eq(key), eq(150));
     }
 
     @Test
@@ -269,8 +270,8 @@ public class CachingModuleTest {
         assertEquals(expected, resultWhenInvokedTwice);
 
         verify(encryptionService, times(2)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(0)).get(any());
-        verify(storedCacheDao, times(0)).save(any(), any(), anyInt());
+        verify(storedCacheDao, times(0)).get(any(), any());
+        verify(storedCacheDao, times(0)).save(any(), any(), any(), anyInt());
     }
 
     @Test
@@ -279,8 +280,8 @@ public class CachingModuleTest {
         dummyClass.voidMethod(USER_ID);
 
         verify(encryptionService, times(1)).encrypt(USER_ID_IN_BYTES);
-        verify(storedCacheDao, times(0)).get(any());
-        verify(storedCacheDao, times(0)).save(any(), any(), anyInt());
+        verify(storedCacheDao, times(0)).get(any(), any());
+        verify(storedCacheDao, times(0)).save(any(), any(), any(), anyInt());
     }
 
     private StoredCache getExpectedObject() {

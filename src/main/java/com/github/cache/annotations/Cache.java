@@ -21,6 +21,11 @@ public @interface Cache {
      */
     String[] keys();
 
+    /**
+     * Would be used to bucket a set of cache and later remove the whole set underneath the group
+     */
+    String[] groupingKeys() default {"default-cache-set"};
+
     int ttlInSec() default 600;
 
     boolean encrypt() default false;
