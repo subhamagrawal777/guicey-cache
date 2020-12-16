@@ -107,4 +107,67 @@ public class DummyClass {
         encryptionService.encrypt(userId.getBytes());
     }
 
+    @SneakyThrows
+    @RemoveCache(keySet = {
+            @Index(groupingKeys = "TEST"),
+            @Index(groupingKeys = {"$.userId", "TEMP"}, keys = {"$.encryptionMode", "TEMP"}),
+            @Index(groupingKeys = {"TEST"}, keys = {"$.userId", "$.mo"})
+    }, before = true)
+    public StoredCache methodWithBothFlagsTurnedOn(String userId, EncryptionMode encryptionMode) {
+        val data = encryptionService.encrypt(userId.getBytes());
+        return StoredCache.builder()
+                .data(data)
+                .encryptionMeta(EncryptionMeta.builder()
+                        .encryptionMode(encryptionMode)
+                        .build())
+                .build();
+    }
+
+    @SneakyThrows
+    @RemoveCache(keySet = {
+            @Index(groupingKeys = "TEST"),
+            @Index(groupingKeys = {"$.userId", "TEMP"}, keys = {"$.encryptionMode", "TEMP"}),
+            @Index(groupingKeys = {"TEST"}, keys = {"$.userId", "$.mo"})
+    }, after = false)
+    public StoredCache methodWithBothFlagsTurnedOff(String userId, EncryptionMode encryptionMode) {
+        val data = encryptionService.encrypt(userId.getBytes());
+        return StoredCache.builder()
+                .data(data)
+                .encryptionMeta(EncryptionMeta.builder()
+                        .encryptionMode(encryptionMode)
+                        .build())
+                .build();
+    }
+
+    @SneakyThrows
+    @RemoveCache(keySet = {
+            @Index(groupingKeys = "TEST"),
+            @Index(groupingKeys = {"$.userId", "TEMP"}, keys = {"$.encryptionMode", "TEMP"}),
+            @Index(groupingKeys = {"TEST"}, keys = {"$.userId", "$.mo"})
+    })
+    public StoredCache methodWithOneInvalidIndex(String userId, EncryptionMode encryptionMode) {
+        val data = encryptionService.encrypt(userId.getBytes());
+        return StoredCache.builder()
+                .data(data)
+                .encryptionMeta(EncryptionMeta.builder()
+                        .encryptionMode(encryptionMode)
+                        .build())
+                .build();
+    }
+
+    @SneakyThrows
+    @RemoveCache(keySet = {
+            @Index(groupingKeys = "$.userrId"),
+            @Index(groupingKeys = {"TEST", "$.user"}, keys = {"$.userId", "$.mode"}),
+            @Index(groupingKeys = {"TEST"}, keys = {"$.userId", "$.mo"})
+    })
+    public StoredCache methodWithAllInvalidIndices(String userId, EncryptionMode encryptionMode) {
+        val data = encryptionService.encrypt(userId.getBytes());
+        return StoredCache.builder()
+                .data(data)
+                .encryptionMeta(EncryptionMeta.builder()
+                        .encryptionMode(encryptionMode)
+                        .build())
+                .build();
+    }
 }
