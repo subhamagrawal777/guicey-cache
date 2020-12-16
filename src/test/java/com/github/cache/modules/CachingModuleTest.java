@@ -1,6 +1,7 @@
-package com.github.cache;
+package com.github.cache.modules;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.cache.DummyClass;
 import com.github.cache.crypto.CryptoFactory;
 import com.github.cache.crypto.EncryptionService;
 import com.github.cache.models.EncryptionMeta;

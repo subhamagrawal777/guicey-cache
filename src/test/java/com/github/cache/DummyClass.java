@@ -1,6 +1,8 @@
 package com.github.cache;
 
 import com.github.cache.annotations.Cache;
+import com.github.cache.annotations.Index;
+import com.github.cache.annotations.RemoveCache;
 import com.github.cache.crypto.EncryptionService;
 import com.github.cache.models.EncryptionMeta;
 import com.github.cache.models.EncryptionMode;
@@ -21,7 +23,7 @@ public class DummyClass {
     }
 
     @SneakyThrows
-    StoredCache storedCacheMethodWithoutAnnotation(String userId, EncryptionMode encryptionMode) {
+    public StoredCache storedCacheMethodWithoutAnnotation(String userId, EncryptionMode encryptionMode) {
         val data = encryptionService.encrypt(userId.getBytes());
         return StoredCache.builder()
                 .data(data)
@@ -33,7 +35,7 @@ public class DummyClass {
 
     @SneakyThrows
     @Cache(keys = {"$.userId", "$.encryptionMode", "method"})
-    StoredCache storedCacheMethod(String userId, EncryptionMode encryptionMode) {
+    public StoredCache storedCacheMethod(String userId, EncryptionMode encryptionMode) {
         val data = encryptionService.encrypt(userId.getBytes());
         return StoredCache.builder()
                 .data(data)
@@ -45,7 +47,7 @@ public class DummyClass {
 
     @SneakyThrows
     @Cache(keys = {"$.userId"})
-    List<StoredCache> storedCacheListMethod(String userId, EncryptionMode encryptionMode) {
+    public List<StoredCache> storedCacheListMethod(String userId, EncryptionMode encryptionMode) {
         val data = encryptionService.encrypt(userId.getBytes());
         return ImmutableList.of(
                 StoredCache.builder()
@@ -65,7 +67,7 @@ public class DummyClass {
 
     @SneakyThrows
     @Cache(keys = {"$.userId", "$.encryptionMode"}, encrypt = true, ttlInSec = 100)
-    StoredCache storedCacheMethodWithEncryption(String userId, EncryptionMode encryptionMode) {
+    public StoredCache storedCacheMethodWithEncryption(String userId, EncryptionMode encryptionMode) {
         val data = encryptionService.encrypt(userId.getBytes());
         return StoredCache.builder()
                 .data(data)
@@ -77,7 +79,7 @@ public class DummyClass {
 
     @SneakyThrows
     @Cache(keys = {"$.userId", "$.encryptionMode", "method"}, structureChangeAt = 1607433312525L, ttlInSec = 150)
-    StoredCache storedCacheMethodWithStructureChange(String userId, EncryptionMode encryptionMode) {
+    public StoredCache storedCacheMethodWithStructureChange(String userId, EncryptionMode encryptionMode) {
         val data = encryptionService.encrypt(userId.getBytes());
         return StoredCache.builder()
                 .data(data)
@@ -89,7 +91,7 @@ public class DummyClass {
 
     @SneakyThrows
     @Cache(keys = {"$.userId", "$.mode", "method"})
-    StoredCache methodWithInvalidKey(String userId, EncryptionMode encryptionMode) {
+    public StoredCache methodWithInvalidKey(String userId, EncryptionMode encryptionMode) {
         val data = encryptionService.encrypt(userId.getBytes());
         return StoredCache.builder()
                 .data(data)
@@ -101,7 +103,7 @@ public class DummyClass {
 
     @SneakyThrows
     @Cache(keys = {"$.userId"})
-    void voidMethod(String userId) {
+    public void voidMethod(String userId) {
         encryptionService.encrypt(userId.getBytes());
     }
 

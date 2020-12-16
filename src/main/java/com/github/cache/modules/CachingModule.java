@@ -1,4 +1,4 @@
-package com.github.cache;
+package com.github.cache.modules;
 
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.github.cache.annotations.Cache;

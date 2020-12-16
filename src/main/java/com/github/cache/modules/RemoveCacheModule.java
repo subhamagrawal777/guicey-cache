@@ -1,4 +1,4 @@
-package com.github.cache;
+package com.github.cache.modules;
 
 import com.github.cache.annotations.RemoveCache;
 import com.github.cache.models.CacheIndex;

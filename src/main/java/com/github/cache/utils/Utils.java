@@ -13,6 +13,7 @@ import org.aopalliance.intercept.MethodInvocation;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -41,10 +42,18 @@ public class Utils {
 
     public static List<CacheIndex> buildCacheIndices(DocumentContext documentContext, Index[] indices) {
         return Arrays.stream(indices)
-                .map(index -> CacheIndex.builder()
-                        .key(buildKey(documentContext, index.keys()))
-                        .groupingKey(buildKey(documentContext, index.groupingKeys()))
-                        .build())
+                .map(index -> {
+                            try {
+                                return CacheIndex.builder()
+                                        .key(buildKey(documentContext, index.keys()))
+                                        .groupingKey(buildKey(documentContext, index.groupingKeys()))
+                                        .build();
+                            } catch (Exception e) {
+                                return null;
+                            }
+                        }
+                )
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 }
