@@ -10,6 +10,7 @@ public abstract class CacheBundle implements GuiceyBundle {
 
     public void initialize(GuiceyBootstrap guiceyBootstrap) {
         guiceyBootstrap.modules(new CachingModule(getStoredCacheDao()));
+        guiceyBootstrap.modules(new RemoveCacheModule());
         JsonUtils.setup(objectMapper());
     }
 

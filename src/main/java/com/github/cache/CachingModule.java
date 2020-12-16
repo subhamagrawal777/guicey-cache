@@ -8,14 +8,11 @@ import com.github.cache.models.StoredCache;
 import com.github.cache.storage.StoredCacheDao;
 import com.github.cache.utils.CompressionUtils;
 import com.github.cache.utils.Constants;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
+import com.github.cache.utils.Utils;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.matcher.Matchers;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -24,9 +21,7 @@ import org.aopalliance.intercept.MethodInvocation;
 
 import javax.inject.Named;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 @AllArgsConstructor
@@ -69,9 +64,9 @@ public class CachingModule extends AbstractModule {
             val cache = invocation.getMethod().getAnnotation(Cache.class);
             String key, groupingKey;
             try {
-                val documentContext = getDocumentContext(invocation);
-                key = buildKey(documentContext, cache.keys());
-                groupingKey = buildKey(documentContext, cache.groupingKeys());
+                val documentContext = Utils.getDocumentContext(invocation);
+                key = Utils.buildKey(documentContext, cache.keys());
+                groupingKey = Utils.buildKey(documentContext, cache.groupingKeys());
             } catch (Exception e) {
                 log.error("Error forming Key. Please check cache param. Method Name: {}", invocation.getMethod().getName(), e);
                 return invocation.proceed();
@@ -149,28 +144,6 @@ public class CachingModule extends AbstractModule {
                     .cachedAt(Instant.now().toEpochMilli())
                     .encryptionMeta(encryptionMeta)
                     .build();
-        }
-
-        private String buildKey(DocumentContext documentContext, String[] keys) {
-
-            return Arrays.stream(keys)
-                    .map(key -> {
-                        if (key.startsWith("$.")) {
-                            val result = documentContext.read(key, String.class);
-                            Preconditions.checkNotNull(result);
-                            return result;
-                        }
-                        return key;
-                    })
-                    .collect(Collectors.joining(":"));
-        }
-
-        private DocumentContext getDocumentContext(MethodInvocation invocation) {
-            val context = Maps.newHashMap();
-            for (int i = 0; i < invocation.getMethod().getParameters().length; i++) {
-                context.put(invocation.getMethod().getParameters()[i].getName(), invocation.getArguments()[i]);
-            }
-            return JsonPath.parse(context);
         }
     }
 }
