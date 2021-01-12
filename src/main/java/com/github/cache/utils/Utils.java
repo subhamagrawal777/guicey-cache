@@ -37,7 +37,7 @@ public class Utils {
         for (int i = 0; i < invocation.getMethod().getParameters().length; i++) {
             context.put(invocation.getMethod().getParameters()[i].getName(), invocation.getArguments()[i]);
         }
-        return JsonPath.parse(context);
+        return JsonPath.parse(JsonUtils.convertToMap(context));
     }
 
     public static List<CacheIndex> buildCacheIndices(DocumentContext documentContext, Index[] indices) {

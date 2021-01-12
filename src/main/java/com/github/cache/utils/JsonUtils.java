@@ -1,6 +1,7 @@
 package com.github.cache.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
@@ -8,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonUtils {
@@ -24,6 +26,15 @@ public class JsonUtils {
             return null;
         }
         return mapper.writeValueAsBytes(data);
+    }
+
+    @Nullable
+    static Map<String, Object> convertToMap(Object data) {
+        if (data == null) {
+            return null;
+        }
+        return mapper.convertValue(data, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     @Nullable
