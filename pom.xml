@@ -6,7 +6,7 @@
 
     <groupId>com.github.cache</groupId>
     <artifactId>cache</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <version>1.0.5</version>
 
     <distributionManagement>
         <repository>
@@ -40,9 +40,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <dropwizard.guicey.version>4.2.1</dropwizard.guicey.version>
-        <dropwizard.core.version>1.3.5</dropwizard.core.version>
-        <jackson.databind.version>2.9.6</jackson.databind.version>
+        <dropwizard.guicey.version>5.0.1</dropwizard.guicey.version>
+        <dropwizard.core.version>2.0.23</dropwizard.core.version>
+        <jackson.databind.version>2.12.1</jackson.databind.version>
         <lombok.version>1.18.0</lombok.version>
         <lombok.maven.plugin.version>1.18.12.0</lombok.maven.plugin.version>
         <junit.version>4.12</junit.version>
