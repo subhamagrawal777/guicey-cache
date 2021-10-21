@@ -56,3 +56,6 @@ the cache stored previously
 Current supported encryption is AES 128 bit. It is also version based, as in we would want to change the 
 encryption mechanism in future then all existing ones would still be decrypted using the earlier mechanism and 
 is backward compatible
+
+
+For other details, refer the tests
